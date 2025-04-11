@@ -29,7 +29,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Return the user.', type: User })
   @ApiResponse({ status: 404, description: 'User not found.' })
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+    return this.usersService.findOne(id);
   }
 
   @Delete(':id')
@@ -37,6 +37,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'The user has been successfully deleted.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
   remove(@Param('id') id: string): Promise<void> {
-    return this.usersService.remove(+id);
+    return this.usersService.remove(id);
   }
 }

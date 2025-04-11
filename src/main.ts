@@ -1,20 +1,32 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
+  
+  // Global pipes
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    transform: true,
+    forbidNonWhitelisted: true,
+  }));
+  
   // Swagger setup
   const config = new DocumentBuilder()
-    .setTitle('NestJS API')
-    .setDescription('NestJS API with TypeORM and Swagger')
+    .setTitle('Secure Document Vault API')
+    .setDescription('API for managing secure documents with expiring access links')
     .setVersion('1.0')
-    .addTag('api')
+    .addBearerAuth()
     .build();
+  
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-
+  
+  // Enable CORS
+  app.enableCors();
+  
   await app.listen(3000);
 }
 bootstrap();

@@ -1,20 +1,33 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Document } from '../../documents/entities/document.entity';
+import { AccessLink } from '../../access-links/entities/access-link.entity';
 
-@Entity()
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @ApiProperty({ example: 'John Doe', description: 'The name of the user' })
-  @Column()
-  name: string;
-
-  @ApiProperty({ example: 'john@example.com', description: 'The email of the user' })
   @Column({ unique: true })
   email: string;
 
-  @ApiProperty({ example: true, description: 'Whether the user is active' })
-  @Column({ default: true })
-  isActive: boolean;
+  @Column()
+  password: string; // This will store the hashed password
+
+  @Column({ nullable: true })
+  firstName: string;
+
+  @Column({ nullable: true })
+  lastName: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @OneToMany(() => Document, document => document.owner)
+  documents: Document[];
+
+  @OneToMany(() => AccessLink, accessLink => accessLink.createdBy)
+  accessLinks: AccessLink[];
 }
