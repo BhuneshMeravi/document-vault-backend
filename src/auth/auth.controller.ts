@@ -1,29 +1,117 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
+import { 
+    Controller, 
+    Post, 
+    Body, 
+    UseGuards, 
+    HttpCode, 
+    HttpStatus,
+    Request,
+    BadRequestException,
+    InternalServerErrorException
+  } from '@nestjs/common';
+  import { AuthService } from './auth.service';
+  import { LocalAuthGuard } from './guards/local-auth.guard';
+  import { RegisterDto } from './dto/register.dto';
+  import { LoginDto } from './dto/login.dto';
+  import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+  import { VerifyEmailDto } from './dto/verify-email.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerificationService } from './services/verification.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+  
+  @ApiTags('auth')
+  @Controller('auth')
+  export class AuthController {
+    constructor(private authService: AuthService,
+        private verificationService: VerificationService,
+    ) {}
+  
+    @Post('register')
+    @ApiOperation({ summary: 'Register a new user' })
+    @ApiBody({ type: RegisterDto })
+    @ApiResponse({ status: HttpStatus.CREATED, description: 'User successfully registered' })
+    @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email already in use' })
+    @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
+    async register(@Body() registerDto: RegisterDto) {
+      try {
+        return await this.authService.register(registerDto);
+      } catch (error) {
+        if (error.status === HttpStatus.CONFLICT) {
+          throw error;
+        }
+        if (error.status === HttpStatus.BAD_REQUEST) {
+          throw new BadRequestException(error.message);
+        }
+        throw new InternalServerErrorException('Registration failed');
+      }
+    }
+  
+    @UseGuards(LocalAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    @Post('login')
+    @ApiOperation({ summary: 'Login with email and password' })
+    @ApiBody({ type: LoginDto })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Login successful' })
+    @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
+    async login(@Body() loginDto: LoginDto) {
+      try {
+        return await this.authService.login(loginDto);
+      } catch (error) {
+        if (error.status === HttpStatus.UNAUTHORIZED) {
+          throw error;
+        }
+        throw new InternalServerErrorException('Login failed');
+      }
+    }
 
-@ApiTags('auth')
-@Controller('auth')
-export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User registered successfully', type: AuthResponseDto })
-  @ApiResponse({ status: 409, description: 'Email already in use' })
-  async register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto);
+    @Post('send-verification-email')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Send email verification OTP' })
+  @ApiResponse({ status: 200, description: 'Verification email sent' })
+  @ApiResponse({ status: 400, description: 'Email already verified' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async sendVerificationEmail(@Request() req) {
+    await this.verificationService.sendEmailVerificationOtp(req.user.id);
+    return { message: 'Verification email sent successfully' };
   }
 
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'User login' })
-  @ApiResponse({ status: 200, description: 'User logged in successfully', type: AuthResponseDto })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  @Post('verify-email')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify email with OTP' })
+  @ApiBody({ type: VerifyEmailDto })
+  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired code' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async verifyEmail(@Request() req, @Body() verifyEmailDto: VerifyEmailDto) {
+    await this.verificationService.verifyEmail(req.user.id, verifyEmailDto.code);
+    return { message: 'Email verified successfully' };
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset OTP' })
+  @ApiBody({ type: RequestPasswordResetDto })
+  @ApiResponse({ status: 200, description: 'If email exists, reset instructions sent' })
+  async forgotPassword(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
+    await this.verificationService.sendPasswordResetOtp(requestPasswordResetDto.email);
+    // For security, always return success even if email doesn't exist
+    return { message: 'If your email is registered, you will receive password reset instructions' };
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password using OTP' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired code' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    await this.verificationService.resetPasswordWithOtp(
+      resetPasswordDto.email,
+      resetPasswordDto.code,
+      resetPasswordDto.newPassword,
+    );
+    return { message: 'Password reset successfully' };
   }
 }
+  

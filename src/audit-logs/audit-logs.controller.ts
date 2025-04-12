@@ -1,9 +1,9 @@
-// Create a new controller for the audit logs
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuditLogsService } from './audit-logs.service';
 import { AuditLogResponseDto } from './dto/audit-log-response.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+
 
 @ApiTags('audit-logs')
 @Controller('audit-logs')

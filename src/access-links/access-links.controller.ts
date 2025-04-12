@@ -5,8 +5,8 @@ import { AccessLinksService } from './access-links.service';
 import { CreateAccessLinkDto } from './dto/create-access-link.dto';
 import { AccessLinkResponseDto } from './dto/access-link-response.dto';
 import { DocumentsService } from '../documents/documents.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Import your auth guard
 import { StreamableFile } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('access-links')
 @Controller('access-links')

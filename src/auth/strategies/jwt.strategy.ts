@@ -2,7 +2,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,20 +13,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET', 'super-secret-default-key'),
+      secretOrKey: configService.get<string>('JWT_SECRET') || 'default-secret',
     });
   }
 
   async validate(payload: any) {
     try {
-      const user = await this.usersService.findById(payload.sub);
+      const user = await this.usersService.findOne(payload.sub);
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
-      const { password, ...result } = user; // Remove password from result
-      return result;
+      
+      return { 
+        id: payload.sub, 
+        email: payload.email,
+        role: payload.role
+      };
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid token');
     }
   }
 }
