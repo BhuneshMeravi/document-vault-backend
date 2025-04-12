@@ -5,12 +5,13 @@ import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
 import { Document } from './entities/document.entity';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { memoryStorage } from 'multer';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Document]),
     MulterModule.register({
-      dest: './uploads',
+      storage: memoryStorage(),
     }),
     AuditLogsModule,
   ],

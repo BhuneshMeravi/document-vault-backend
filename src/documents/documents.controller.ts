@@ -5,8 +5,9 @@ import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentResponseDto } from './dto/document-response.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Import your auth guard
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Response } from 'express';
+import { Express } from 'express';
 
 @ApiTags('documents')
 @Controller('documents')
@@ -19,13 +20,42 @@ export class DocumentsController {
   @ApiConsumes('multipart/form-data')  
   @ApiOperation({ summary: 'Upload a new document' })
   @ApiResponse({ status: 201, description: 'Document uploaded successfully', type: DocumentResponseDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+        description: {
+          type: 'string',
+        },
+        encrypt: {
+          type: 'boolean',
+          default: true,
+        },
+      },
+    },
+  })
   @ApiBearerAuth()
   async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() createDocumentDto: CreateDocumentDto,
     @Req() req: any,
   ) {
-    return this.documentsService.uploadDocument(file, createDocumentDto, req.user.id, req);
+    // Extract properties from the request body
+    const dto = {
+      description: createDocumentDto.description,
+      encrypt: createDocumentDto.encrypt !== undefined ? createDocumentDto.encrypt : true,
+    };
+    
+    // Validate file existence
+    if (!file) {
+      throw new Error('File is required');
+    }
+    
+    return this.documentsService.uploadDocument(file, dto, req.user.id, req);
   }
 
   @Get()

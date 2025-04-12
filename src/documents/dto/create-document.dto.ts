@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateDocumentDto {
-  @ApiProperty({ type: 'string', format: 'binary' })
-  file: any;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -12,5 +11,11 @@ export class CreateDocumentDto {
   
   @ApiProperty({ default: true })
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
   encrypt?: boolean;
 }

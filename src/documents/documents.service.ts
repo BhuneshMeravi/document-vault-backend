@@ -11,9 +11,12 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { EncryptionService } from '../encryption/encryption.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditLogAction } from '../audit-logs/entities/audit-log.entity';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class DocumentsService {
+  private readonly s3client: S3Client;
   private supabase: SupabaseClient;
   private bucketName: string;
 
@@ -24,6 +27,11 @@ export class DocumentsService {
     private encryptionService: EncryptionService,
     private auditLogsService: AuditLogsService,
   ) {
+    // // Initialize AWS S3 client
+    // this.s3client = new S3Client({
+    //   region: this.configService.getOrThrow('AWS_S3_REGION'),
+    // });
+
     // Initialize Supabase client
     this.supabase = createClient(
       this.configService.get<string>('supabase.url') ?? (() => { throw new Error('Supabase URL is not defined'); })(),
@@ -89,7 +97,16 @@ export class DocumentsService {
       if (error) {
         throw new InternalServerErrorException(`Failed to upload to storage: ${error.message}`);
       }
-      
+
+    //   // Upload to Amazon s3 Storage
+    //   await this.s3client.send(
+    //     new PutObjectCommand({
+    //      Bucket: this.configService.getOrThrow('AWS_S3_BUCKET'),
+    //      Key: filePath,
+    //      Body: fileBuffer,
+    //    })
+    //  );
+
       // Create document record
       const document = this.documentsRepository.create({
         filename: file.originalname,
