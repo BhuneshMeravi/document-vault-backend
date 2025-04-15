@@ -22,14 +22,13 @@ import { AuthModule } from './auth/auth.module';
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
         ssl: {
-          rejectUnauthorized: false, // Required for Neon DB
+          rejectUnauthorized: false,
         },
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('NODE_ENV') !== 'production',
         logging: ['error', 'warn'],
       }),
     }),
-    // Other modules will be added here
     AuthModule,
     UsersModule,
     DocumentsModule,

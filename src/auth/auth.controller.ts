@@ -19,6 +19,7 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerificationService } from './services/verification.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { response } from 'express';
   
   @ApiTags('auth')
   @Controller('auth')
