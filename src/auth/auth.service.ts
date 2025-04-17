@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+// import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
@@ -34,7 +35,7 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, res) {
     try {
       const user = await this.validateUser(loginDto.email, loginDto.password);
       if (!user) {
@@ -46,11 +47,28 @@ export class AuthService {
         email: user.email,
         role: user.role
       };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      res.cookie('auth_token', accessToken, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+      });
+
+      return res.status(200).json({ 
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+        accessToken,
+      });
       
-      return {
-        user,
-        accessToken: this.jwtService.sign(payload),
-      };
+      
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -59,7 +77,7 @@ export class AuthService {
     }
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, res) {
     try {
       const user = await this.usersService.create(registerDto);
       
@@ -77,18 +95,29 @@ export class AuthService {
         throw error
         // Continue with registration even if email sending fails
       }
+      const accessToken = this.jwtService.sign(payload);
+
+      res.cookie('auth_token', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+      });
       
-      return {
+      
+      return res.status(201).json({
+        message: 'User registered successfully. Please verify your email.',
         user: {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
         },
-        accessToken: this.jwtService.sign(payload),
-      };
+        accessToken,
+      })
     } catch (error) {
       throw error; // The users service already handles specific errors
     }
   }
 }
+

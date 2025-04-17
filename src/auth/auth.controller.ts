@@ -7,7 +7,9 @@ import {
     HttpStatus,
     Request,
     BadRequestException,
-    InternalServerErrorException
+    InternalServerErrorException,
+    UnauthorizedException,
+    Response
   } from '@nestjs/common';
   import { AuthService } from './auth.service';
   import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -19,7 +21,6 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerificationService } from './services/verification.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { response } from 'express';
   
   @ApiTags('auth')
   @Controller('auth')
@@ -34,9 +35,9 @@ import { response } from 'express';
     @ApiResponse({ status: HttpStatus.CREATED, description: 'User successfully registered' })
     @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email already in use' })
     @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
-    async register(@Body() registerDto: RegisterDto) {
+    async register(@Body() registerDto: RegisterDto, @Response() res) {
       try {
-        return await this.authService.register(registerDto);
+        return await this.authService.register(registerDto, res);
       } catch (error) {
         if (error.status === HttpStatus.CONFLICT) {
           throw error;
@@ -55,9 +56,9 @@ import { response } from 'express';
     @ApiBody({ type: LoginDto })
     @ApiResponse({ status: HttpStatus.OK, description: 'Login successful' })
     @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
-    async login(@Body() loginDto: LoginDto) {
+    async login(@Body() loginDto: LoginDto, @Response() res) {
       try {
-        return await this.authService.login(loginDto);
+        return await this.authService.login(loginDto, res);
       } catch (error) {
         if (error.status === HttpStatus.UNAUTHORIZED) {
           throw error;
@@ -113,6 +114,27 @@ import { response } from 'express';
       resetPasswordDto.newPassword,
     );
     return { message: 'Password reset successfully' };
+  }
+
+  @Post('logout')
+  async logout(@Response() res) {
+    res.clearCookie('auth_token');
+    return res.status(HttpStatus.OK).json({
+      message: 'Logged out successfully',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('verify')
+  async verify(@Request() req) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    
+    return {
+      user: req.user,
+    };
   }
 }
   
