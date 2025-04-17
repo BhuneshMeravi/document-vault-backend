@@ -6,7 +6,7 @@ import { AccessLinkResponseDto } from './dto/access-link-response.dto';
 import { DocumentsService } from '../documents/documents.service';
 import { StreamableFile } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Response } from 'express';
+import * as express from 'express';
 
 @ApiTags('access-links')
 @Controller('access-links')
@@ -79,7 +79,7 @@ export class PublicAccessController {
   async accessDocument(
     @Param('token') token: string,
     @Req() req: any,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: express.Response,
   ) {
     const { documentId, accessLinkId } = await this.accessLinksService.validateAccessLink(token, req);
     
