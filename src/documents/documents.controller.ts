@@ -7,7 +7,7 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentResponseDto } from './dto/document-response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Express } from 'express';
-import { Response as ExpressResponse } from 'express';
+import { Response } from 'express';
 
 @ApiTags('documents')
 @Controller('documents')
@@ -108,7 +108,7 @@ export class DocumentsController {
   async download(
     @Param('id') id: string,
     @Req() req: any,
-    @Res({ passthrough: true }) res: ExpressResponse,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const { buffer, filename, contentType } = await this.documentsService.downloadDocument(id, req.user.id, null, req);
     
