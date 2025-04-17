@@ -118,7 +118,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
   @Post('logout')
   async logout(@Response() res) {
-    res.clearCookie('auth_token');
+    // res.clearCookie('auth_token');
     return res.status(HttpStatus.OK).json({
       message: 'Logged out successfully',
     });
