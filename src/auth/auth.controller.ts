@@ -118,23 +118,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
   @Post('logout')
   async logout(@Response() res) {
-    // res.clearCookie('auth_token');
     return res.status(HttpStatus.OK).json({
       message: 'Logged out successfully',
     });
   }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @Post('verify')
-  async verify(@Request() req) {
-    if (!req.user) {
-      throw new UnauthorizedException();
-    }
-    
-    return {
-      user: req.user,
-    };
-  }
 }
-  
