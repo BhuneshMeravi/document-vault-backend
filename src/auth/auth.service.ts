@@ -50,13 +50,6 @@ export class AuthService {
 
       const accessToken = this.jwtService.sign(payload);
 
-      // res.cookie('auth_token', accessToken, {
-      //   httpOnly: false,
-      //   secure: process.env.NODE_ENV === 'production',
-      //   sameSite: 'strict',
-      //   maxAge: 24 * 60 * 60 * 1000, // 1 day
-      // });
-
       return res.status(200).json({ 
         message: 'Login successful',
         user: {
@@ -97,14 +90,6 @@ export class AuthService {
       }
       const accessToken = this.jwtService.sign(payload);
 
-      // res.cookie('auth_token', accessToken, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === 'production',
-      //   sameSite: 'strict',
-      //   maxAge: 24 * 60 * 60 * 1000, // 1 day
-      // });
-      
-      
       return res.status(201).json({
         message: 'User registered successfully. Please verify your email.',
         user: {
@@ -116,7 +101,7 @@ export class AuthService {
         accessToken,
       })
     } catch (error) {
-      throw error; // The users service already handles specific errors
+      throw error; 
     }
   }
 }
