@@ -212,7 +212,10 @@ export class DocumentsService {
       userAgent: req.headers['user-agent'],
     });
     
-    // Delete from database
+    // First, delete all related audit logs
+    await this.auditLogsService.deleteAuditLogsByDocumentId(document.id);
+    
+    // Then delete the document
     await this.documentsRepository.remove(document);
     
     return { success: true };

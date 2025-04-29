@@ -48,6 +48,6 @@ export class Document {
   @OneToMany(() => AccessLink, accessLink => accessLink.document)
   accessLinks: AccessLink[];
 
-  @OneToMany(() => AuditLog, auditLog => auditLog.document)
+  @OneToMany(() => AuditLog, auditLog => auditLog.document, { cascade: true, onDelete: 'CASCADE' })
   auditLogs: AuditLog[];
 }

@@ -39,7 +39,7 @@ export class AuditLogsService {
       skip: (page - 1) * limit,
       take: limit,
     });
-    
+
     return {
       data: logs,
       meta: {
@@ -58,7 +58,7 @@ export class AuditLogsService {
       skip: (page - 1) * limit,
       take: limit,
     });
-    
+
     return {
       data: logs,
       meta: {
@@ -68,5 +68,10 @@ export class AuditLogsService {
         pages: Math.ceil(total / limit),
       },
     };
+  }
+
+  // In audit-logs.service.ts
+  async deleteAuditLogsByDocumentId(documentId: string) {
+    return this.auditLogsRepository.delete({ documentId });
   }
 }

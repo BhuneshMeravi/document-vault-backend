@@ -1,5 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, Length, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { BeforeInsert } from 'typeorm';
 
 export class ResetPasswordDto {
   @ApiProperty({ example: 'user@example.com' })

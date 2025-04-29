@@ -6,6 +6,7 @@ import { User } from '../../users/entities/user.entity';
 import { EmailService } from '../../common/services/email.service';
 import { UsersService } from '../../users/users.service';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class VerificationService {
@@ -166,8 +167,12 @@ export class VerificationService {
       const isValid = await this.verifyOtp(user.id, code, OtpType.PASSWORD_RESET);
       
       if (isValid) {
-        // Update user's password
-        await this.usersService.update(user.id, { password: newPassword });
+        // Hash the new password manually since the @BeforeInsert hook won't run on update
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        
+        // Update with hashed password
+        await this.usersService.update(user.id, { password: hashedPassword });
         return true;
       }
       
