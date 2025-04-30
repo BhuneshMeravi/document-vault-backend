@@ -93,7 +93,6 @@ import {
     @ApiResponse({ status: 404, description: 'User not found' })
     async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req) {
       try {
-        // Users can only update their own info unless they're admin
         if (req.user.id !== id && req.user.role !== 'admin') {
           throw new UnauthorizedException('Access denied');
         }

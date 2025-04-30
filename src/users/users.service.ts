@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { PaginationResponse } from '../common/interfaces/pagination-response.interface';
+import * as bcrypt from 'bcryptjs';
 
 
 @Injectable()
@@ -87,12 +88,16 @@ export class UsersService {
     try {
       const user = await this.findOne(id);
       
-      // If email is being updated, check it's not already in use
       if (updateUserDto.email && updateUserDto.email !== user.email) {
         const existingUser = await this.findByEmail(updateUserDto.email);
         if (existingUser) {
           throw new ConflictException('Email already in use');
         }
+      }
+
+       if (updateUserDto.password) {
+        const salt = await bcrypt.genSalt();
+        updateUserDto.password = await bcrypt.hash(updateUserDto.password, salt);
       }
       
       Object.assign(user, updateUserDto);

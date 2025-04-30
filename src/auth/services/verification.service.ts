@@ -167,7 +167,6 @@ export class VerificationService {
       const isValid = await this.verifyOtp(user.id, code, OtpType.PASSWORD_RESET);
       
       if (isValid) {
-        // Hash the new password manually since the @BeforeInsert hook won't run on update
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(newPassword, salt);
         
