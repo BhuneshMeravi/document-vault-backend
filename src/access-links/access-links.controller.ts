@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Req, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Req, Query, Res, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AccessLinksService } from './access-links.service';
 import { CreateAccessLinkDto } from './dto/create-access-link.dto';
@@ -13,7 +13,6 @@ import * as express from 'express';
 export class AccessLinksController {
   constructor(
     private readonly accessLinksService: AccessLinksService,
-    private readonly documentsService: DocumentsService,
   ) {}
 
   @Post()
@@ -64,7 +63,6 @@ export class AccessLinksController {
   }
 }
 
-// Create a separate controller for public access via links
 @ApiTags('public-access')
 @Controller('access')
 export class PublicAccessController {
@@ -74,22 +72,63 @@ export class PublicAccessController {
   ) {}
 
   @Get(':token')
-  @ApiOperation({ summary: 'Access and download a document using an access link token' })
+  @ApiOperation({ summary: 'Access and view a document using an access link token' })
   @ApiResponse({ status: 200, description: 'Document file stream' })
   async accessDocument(
     @Param('token') token: string,
     @Req() req: any,
     @Res({ passthrough: true }) res: express.Response,
+    @Query('download') download?: string,
   ) {
     const { documentId, accessLinkId } = await this.accessLinksService.validateAccessLink(token, req);
     
     const { buffer, filename, contentType } = await this.documentsService.downloadDocument(documentId, null, accessLinkId, req);
     
-    res.set({
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
-      'Content-Type': contentType,
-    });
+    // Set appropriate headers based on content type and download parameter
+    const isViewable = this.isViewableInBrowser(contentType);
+    const shouldDownload = download === 'true' || !isViewable;
+    
+    if (shouldDownload) {
+      // Force download with 'attachment'
+      res.set({
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+        'Content-Type': contentType,
+      });
+    } else {
+      // Allow browser to display with 'inline'
+      res.set({
+        'Content-Disposition': `inline; filename="${encodeURIComponent(filename)}"`,
+        'Content-Type': contentType,
+      });
+    }
     
     return new StreamableFile(new Uint8Array(buffer));
+  }
+  
+  private isViewableInBrowser(contentType: string): boolean {
+    const viewableTypes = [
+      'application/pdf',
+      'text/plain',
+      'text/html',
+      'text/css',
+      'text/javascript',
+      'text/csv',
+      'text/xml',
+      'application/json',
+      'application/xml',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/svg+xml',
+      'image/webp',
+      'audio/mpeg',
+      'audio/ogg',
+      'audio/wav',
+      'video/mp4',
+      'video/webm',
+      'video/ogg'
+    ];
+    
+    return viewableTypes.includes(contentType);
   }
 }

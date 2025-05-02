@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, BadRequestException, UnauthorizedExcepti
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { AccessLink } from './entities/access-link.entity';
 import { CreateAccessLinkDto } from './dto/create-access-link.dto';
@@ -21,24 +20,23 @@ export class AccessLinksService {
   ) {}
 
   async create(createAccessLinkDto: CreateAccessLinkDto, userId: string, req: any) {
-    // Verify document exists and user owns it
     const document = await this.documentsService.findOne(createAccessLinkDto.documentId, userId);
     
-    // Generate a secure random token
     const token = crypto.randomBytes(24).toString('hex');
+    
+    const expiresAt = createAccessLinkDto.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     
     const accessLink = this.accessLinksRepository.create({
       token,
       documentId: document.id,
       createdById: userId,
-      expiresAt: createAccessLinkDto.expiresAt,
+      expiresAt: expiresAt,
       maxViews: createAccessLinkDto.maxViews || 0,
       currentViews: 0,
     });
     
     const savedLink = await this.accessLinksRepository.save(accessLink);
     
-    // Log the share action
     await this.auditLogsService.createAuditLog({
       action: AuditLogAction.SHARE,
       userId,
@@ -48,11 +46,10 @@ export class AccessLinksService {
       userAgent: req.headers['user-agent'],
     });
     
-    // Return with the full URL
     const baseUrl = this.configService.get<string>('app.baseUrl');
     return {
       ...savedLink,
-      accessUrl: `${baseUrl}/access/${savedLink.token}`,
+      accessUrl: `${baseUrl}/api/access/${savedLink.token}`,
     };
   }
 
@@ -83,7 +80,6 @@ export class AccessLinksService {
   }
 
   async findLinksByDocument(documentId: string, userId: string) {
-    // Verify document exists and user owns it
     await this.documentsService.findOne(documentId, userId);
     
     const links = await this.accessLinksRepository.find({
@@ -108,7 +104,6 @@ export class AccessLinksService {
       throw new NotFoundException(`Access link with ID "${id}" not found`);
     }
     
-    // Ensure the user is the creator of the link
     if (link.createdById !== userId) {
       throw new UnauthorizedException('You do not have permission to access this link');
     }
@@ -136,21 +131,17 @@ export class AccessLinksService {
       throw new NotFoundException('Invalid or expired access link');
     }
     
-    // Check if link has expired
     if (link.expiresAt && new Date() > link.expiresAt) {
       throw new BadRequestException('Access link has expired');
     }
     
-    // Check if max views has been reached
     if (link.maxViews > 0 && link.currentViews >= link.maxViews) {
       throw new BadRequestException('Access link has reached maximum number of views');
     }
     
-    // Increment view count
     link.currentViews += 1;
     await this.accessLinksRepository.save(link);
     
-    // Log the view action
     await this.auditLogsService.createAuditLog({
       action: AuditLogAction.VIEW,
       accessLinkId: link.id,
