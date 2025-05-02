@@ -52,7 +52,7 @@ export class AccessLinksService {
     const baseUrl = this.configService.get<string>('app.baseUrl');
     return {
       ...savedLink,
-      accessUrl: `${baseUrl}/api/access/${savedLink.token}`,
+      accessUrl: `${baseUrl}/access/${savedLink.token}`,
     };
   }
 
@@ -68,7 +68,7 @@ export class AccessLinksService {
     const baseUrl = this.configService.get<string>('app.baseUrl');
     const enrichedLinks = links.map(link => ({
       ...link,
-      accessUrl: `${baseUrl}/api/access/${link.token}`,
+      accessUrl: `${baseUrl}/access/${link.token}`,
     }));
     
     return {
@@ -94,7 +94,7 @@ export class AccessLinksService {
     const baseUrl = this.configService.get<string>('app.baseUrl');
     return links.map(link => ({
       ...link,
-      accessUrl: `${baseUrl}/api/access/${link.token}`,
+      accessUrl: `${baseUrl}/access/${link.token}`,
     }));
   }
 
@@ -116,7 +116,7 @@ export class AccessLinksService {
     const baseUrl = this.configService.get<string>('app.baseUrl');
     return {
       ...link,
-      accessUrl: `${baseUrl}/api/access/${link.token}`,
+      accessUrl: `${baseUrl}/access/${link.token}`,
     };
   }
 
