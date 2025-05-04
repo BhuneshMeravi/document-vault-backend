@@ -20,7 +20,6 @@ export class VerificationService {
     private configService: ConfigService,
   ) {}
 
-  // Generate a random 6-digit OTP
   private generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
@@ -40,12 +39,10 @@ export class VerificationService {
         },
       });
 
-      // If an existing valid OTP is found, return it
       if (existingOtp) {
         return existingOtp;
       }
 
-      // Generate a new OTP
       const code = this.generateOtp();
       
       // Set expiration (10 minutes)
@@ -93,7 +90,6 @@ export class VerificationService {
       const user = await this.usersService.findByEmail(email);
       
       if (!user) {
-        // For security reasons, don't reveal if email exists or not
         this.logger.warn(`Password reset attempted for non-existent email: ${email}`);
         return;
       }
@@ -102,12 +98,10 @@ export class VerificationService {
       await this.emailService.sendPasswordResetOtp(email, otp.code);
     } catch (error) {
       this.logger.error(`Failed to send password reset OTP for ${email}`, error);
-      // Don't reveal if email exists or not
       return;
     }
   }
 
-  // Verify OTP
   async verifyOtp(userId: string, code: string, type: OtpType): Promise<boolean> {
     try {
       const otp = await this.otpsRepository.findOne({
@@ -138,13 +132,11 @@ export class VerificationService {
     }
   }
 
-  // Verify email with OTP
   async verifyEmail(userId: string, code: string): Promise<User> {
     try {
       const isValid = await this.verifyOtp(userId, code, OtpType.EMAIL_VERIFICATION);
       
       if (isValid) {
-        // Update user's email verification status
         const user = await this.usersService.update(userId, { isEmailVerified: true });
         return user;
       }
@@ -155,7 +147,6 @@ export class VerificationService {
     }
   }
 
-  // Reset password with OTP
   async resetPasswordWithOtp(email: string, code: string, newPassword: string): Promise<boolean> {
     try {
       const user = await this.usersService.findByEmail(email);
@@ -163,15 +154,11 @@ export class VerificationService {
       if (!user) {
         throw new BadRequestException('Invalid email');
       }
-
+  
       const isValid = await this.verifyOtp(user.id, code, OtpType.PASSWORD_RESET);
       
       if (isValid) {
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-        
-        // Update with hashed password
-        await this.usersService.update(user.id, { password: hashedPassword });
+        await this.usersService.update(user.id, { password: newPassword });
         return true;
       }
       
