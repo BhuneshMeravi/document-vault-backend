@@ -9,7 +9,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @ApiProperty({ 
         description: 'Email verification status', 
         required: false,
-        example: true
+        example: false
     })
     isEmailVerified?: boolean;
 }

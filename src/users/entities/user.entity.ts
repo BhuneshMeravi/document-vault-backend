@@ -17,7 +17,7 @@ export class User {
 
   @Column()
   @Exclude()
-  password: string; // This will store the hashed password
+  password: string;
 
   @Column()
   @ApiProperty({ description: 'User full name', example: 'John Doe' })

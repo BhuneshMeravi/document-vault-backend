@@ -88,7 +88,7 @@ export class UsersService {
     try {
       const user = await this.findOne(id);
       
-      if (updateUserDto.email && updateUserDto.email !== user.email) {
+      if (updateUserDto.email) {
         const existingUser = await this.findByEmail(updateUserDto.email);
         if (existingUser) {
           throw new ConflictException('Email already in use');
